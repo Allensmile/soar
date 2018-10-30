@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://github.com/XiaoMi/soar/blob/master/LICENSE) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/XiaoMi/soar)](https://goreportcard.com/report/github.com/XiaoMi/soar) 
 [![Build Status](https://travis-ci.org/XiaoMi/soar.svg?branch=master)](https://travis-ci.org/XiaoMi/soar)
+[![GoDoc](https://godoc.org/github.com/XiaoMi/soar?status.svg)](https://godoc.org/github.com/XiaoMi/soar)
 
 
 [文档](http://github.com/XiaoMi/soar/tree/master/doc) | [FAQ](http://github.com/XiaoMi/soar/blob/master/doc/FAQ.md) | [变更记录](http://github.com/XiaoMi/soar/blob/master/CHANGES.md) | [路线图](http://github.com/XiaoMi/soar/blob/master/doc/roadmap.md) | [English](http://github.com/XiaoMi/soar/blob/master/README_EN.md)
@@ -14,6 +15,7 @@ SOAR(SQL Optimizer And Rewriter)是一个对SQL进行优化和改写的自动化
 
 ## 功能特点
 * 跨平台支持（支持Linux, Mac环境，Windows环境理论上也支持，不过未全面测试）
+* 目前只支持MySQL语法族协议的SQL优化
 * 支持基于启发式算法的语句优化
 * 支持复杂查询的多列索引优化（UPDATE, INSERT, DELETE, SELECT）
 * 支持EXPLAIN信息丰富解读
@@ -36,6 +38,10 @@ SOAR(SQL Optimizer And Rewriter)是一个对SQL进行优化和改写的自动化
 * QQ群: 779359816
 * [Gitter](https://gitter.im/xiaomi-dba/soar) 推荐
 
+ <img src="https://raw.githubusercontent.com/XiaoMi/soar/master/doc/images/qq.png" width="180" hegiht="200" alt="soar-qq" />  <img src="https://raw.githubusercontent.com/XiaoMi/soar/master/doc/images/miops.jpeg" width="260" hegiht="200" alt="XiaoMI-SA" />
+
+
 ## License
 
 [Apache License 2.0](http://github.com/XiaoMi/soar/blob/master/LICENSE).
+

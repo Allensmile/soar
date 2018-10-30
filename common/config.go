@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -120,6 +121,14 @@ type Configration struct {
 	MaxPrettySQLLength int    `yaml:"max-pretty-sql-length"` // 超出该长度的SQL会转换成指纹输出
 }
 
+// getDefaultLogOutput get default log-output by runtime.GOOS
+func getDefaultLogOutput() string {
+	if runtime.GOOS == "windows" {
+		return "nul"
+	}
+	return os.Stderr.Name()
+}
+
 // Config 默认设置
 var Config = &Configration{
 	OnlineDSN: &dsn{
@@ -158,7 +167,7 @@ var Config = &Configration{
 	SpaghettiQueryLength: 2048,
 	AllowDropIndex:       false,
 	LogLevel:             3,
-	LogOutput:            os.Stderr.Name(),
+	LogOutput:            getDefaultLogOutput(),
 	ReportType:           "markdown",
 	ReportCSS:            "",
 	ReportJavascript:     "",
@@ -228,6 +237,10 @@ type dsn struct {
 // 解析命令行DSN输入
 func parseDSN(odbc string, d *dsn) *dsn {
 	var addr, user, password, schema, charset string
+	if odbc == FormatDSN(d) {
+		return d
+	}
+
 	if d != nil {
 		addr = d.Addr
 		user = d.User
@@ -347,7 +360,7 @@ func parseDSN(odbc string, d *dsn) *dsn {
 
 // FormatDSN 格式化打印DSN
 func FormatDSN(env *dsn) string {
-	if env.Disable {
+	if env == nil || env.Disable {
 		return ""
 	}
 	// username:password@ip:port/schema?charset=xxx
@@ -468,7 +481,7 @@ func readCmdFlags() error {
 	onlySyntaxCheck := flag.Bool("only-syntax-check", Config.OnlySyntaxCheck, "OnlySyntaxCheck, 只做语法检查不输出优化建议")
 	profiling := flag.Bool("profiling", Config.Profiling, "Profiling, 开启数据采样的情况下在测试环境执行Profile")
 	trace := flag.Bool("trace", Config.Trace, "Trace, 开启数据采样的情况下在测试环境执行Trace")
-	explain := flag.Bool("explain", Config.Explain, "Explain, 是否开启Exaplin执行计划分析")
+	explain := flag.Bool("explain", Config.Explain, "Explain, 是否开启Explain执行计划分析")
 	sampling := flag.Bool("sampling", Config.Sampling, "Sampling, 数据采样开关")
 	samplingStatisticTarget := flag.Int("sampling-statistic-target", Config.SamplingStatisticTarget, "SamplingStatisticTarget, 数据采样因子，对应postgres的default_statistics_target")
 	connTimeOut := flag.Int("conn-time-out", Config.ConnTimeOut, "ConnTimeOut, 数据库连接超时时间，单位秒")
@@ -524,7 +537,7 @@ func readCmdFlags() error {
 	// +++++++++++++++++其他+++++++++++++++++++
 	printConfig := flag.Bool("print-config", false, "Print configs")
 	ver := flag.Bool("version", false, "Print version info")
-	query := flag.String("query", Config.Query, "Queries for analyzing")
+	query := flag.String("query", Config.Query, "待评审的SQL或SQL文件，如SQL中包含特殊字符建议使用文件名。")
 	listHeuristicRules := flag.Bool("list-heuristic-rules", Config.ListHeuristicRules, "ListHeuristicRules, 打印支持的评审规则列表")
 	listRewriteRules := flag.Bool("list-rewrite-rules", Config.ListRewriteRules, "ListRewriteRules, 打印支持的重写规则列表")
 	listTestSQLs := flag.Bool("list-test-sqls", Config.ListTestSqls, "ListTestSqls, 打印测试case用于测试")
@@ -534,7 +547,7 @@ func readCmdFlags() error {
 	maxPrettySQLLength := flag.Int("max-pretty-sql-length", Config.MaxPrettySQLLength, "MaxPrettySQLLength, 超出该长度的SQL会转换成指纹输出")
 	// 一个不存在log-level，用于更新usage。
 	// 因为vitess里面也用了flag，这些vitess的参数我们不需要关注
-	if !Config.Verbose {
+	if !Config.Verbose && runtime.GOOS != "windows" {
 		flag.Usage = usage
 	}
 	flag.Parse()
@@ -547,7 +560,7 @@ func readCmdFlags() error {
 	}
 
 	Config.OnlineDSN = parseDSN(*onlineDSN, Config.OnlineDSN)
-	Config.TestDSN = parseDSN(*testDSN, Config.OnlineDSN)
+	Config.TestDSN = parseDSN(*testDSN, Config.TestDSN)
 	Config.AllowOnlineAsTest = *allowOnlineAsTest
 	Config.DropTestTemporary = *dropTestTemporary
 	Config.OnlySyntaxCheck = *onlySyntaxCheck
@@ -566,7 +579,11 @@ func readCmdFlags() error {
 		if BaseDir == "" {
 			Config.LogOutput = *logOutput
 		} else {
-			Config.LogOutput = BaseDir + "/" + *logOutput
+			if runtime.GOOS == "windows" {
+				Config.LogOutput = *logOutput
+			} else {
+				Config.LogOutput = BaseDir + "/" + *logOutput
+			}
 		}
 	}
 	Config.ReportType = strings.ToLower(*reportType)
